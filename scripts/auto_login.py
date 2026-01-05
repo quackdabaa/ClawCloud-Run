@@ -27,15 +27,23 @@ class Telegram:
     def __init__(self):
         self.token = os.environ.get('TG_BOT_TOKEN')
         self.chat_id = os.environ.get('TG_CHAT_ID')
+        self.topic_id = os.environ.get('TG_TOPIC_ID')
         self.ok = bool(self.token and self.chat_id)
     
     def send(self, msg):
         if not self.ok:
             return
         try:
+            payload = {
+                "chat_id": self.chat_id,
+                "text": msg,
+                "parse_mode": "HTML"
+            }
+            if self.topic_id:
+                payload["message_thread_id"] = self.topic_id
             requests.post(
                 f"https://api.telegram.org/bot{self.token}/sendMessage",
-                data={"chat_id": self.chat_id, "text": msg, "parse_mode": "HTML"},
+                data=payload,
                 timeout=30
             )
         except:
@@ -45,10 +53,16 @@ class Telegram:
         if not self.ok or not os.path.exists(path):
             return
         try:
+            payload = {
+                "chat_id": self.chat_id,
+                "caption": caption[:1024]
+            }
+            if self.topic_id:
+                payload["message_thread_id"] = self.topic_id
             with open(path, 'rb') as f:
                 requests.post(
                     f"https://api.telegram.org/bot{self.token}/sendPhoto",
-                    data={"chat_id": self.chat_id, "caption": caption[:1024]},
+                    data=payload,
                     files={"photo": f},
                     timeout=60
                 )
